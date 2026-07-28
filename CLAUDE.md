@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A bot that checks the Spanish government's ICP appointment system for available TIE (Tarjeta de Identidad de Extranjero) fingerprint slots in Barcelona, and sends a Telegram notification when slots appear.
 
+## Commit style
+
+Concise conventional commits: `type: short imperative summary`, one line, no body unless truly necessary (e.g. `fix: force full chromium instead of headless-shell substitute`). Types: `feat`, `fix`, `chore`, `docs`, `refactor`.
+
 ## Environment
 
 NixOS. Always use `nix-shell` to enter the dev environment — it provides Python 3.13 + playwright, sets `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to the system Chromium, and has `wireguard-tools` and `nssTools` available.
