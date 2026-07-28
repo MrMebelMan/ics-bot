@@ -5,21 +5,19 @@ import sys
 import time
 from datetime import datetime, timedelta
 
-MORNING_START, MORNING_END = 6, 12
-NIGHT_START, NIGHT_END = 22, 6
-FAST_RETRY_WEEKDAYS = (3, 4)  # Thursday, Friday (Monday=0) — new slots tend to drop these days
+MORNING_START, MORNING_END = 6, 15
+FAST_WEEKDAYS = (3, 4)  # Thursday, Friday (Monday=0) — new slots tend to drop these days
+DEFAULT_INTERVAL_MIN = 30
+FAST_MORNING_INTERVAL_MIN = 15
+FAST_RETRY_WEEKDAYS = FAST_WEEKDAYS
 FAST_RETRY_SECONDS = 5 * 60
 
 
 def next_delay_seconds(now: datetime) -> float:
-    hour = now.hour
-    if MORNING_START <= hour < MORNING_END:
-        low, high = 0.5, 1.5
-    elif hour >= NIGHT_START or hour < NIGHT_END:
-        low, high = 2.0, 3.0
-    else:
-        low, high = 1.0, 3.0
-    return random.uniform(low, high) * 3600
+    is_fast_morning = now.weekday() in FAST_WEEKDAYS and MORNING_START <= now.hour < MORNING_END
+    base_minutes = FAST_MORNING_INTERVAL_MIN if is_fast_morning else DEFAULT_INTERVAL_MIN
+    jitter = base_minutes * 0.1
+    return random.uniform(base_minutes - jitter, base_minutes + jitter) * 60
 
 
 def main() -> None:
@@ -40,7 +38,7 @@ def main() -> None:
             delay = next_delay_seconds(datetime.now())
 
         next_run = datetime.now() + timedelta(seconds=delay)
-        print(f"Next run at {next_run.isoformat(timespec='seconds')} ({delay / 3600:.2f}h from now)\n")
+        print(f"Next run at {next_run.isoformat(timespec='seconds')} ({delay / 60:.1f}m from now)\n")
 
         try:
             time.sleep(delay)

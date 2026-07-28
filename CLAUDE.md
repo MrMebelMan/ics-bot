@@ -39,7 +39,7 @@ python3 scheduler.py
 - `common.py` — shared config (env vars), Telegram senders, and `launch_browser()` (proxy + stealth fingerprint setup used by both `checker.py` and `explore.py`). Any change to browser launch args, headers, or fingerprint spoofing goes here so both scripts stay in sync.
 - `checker.py` — one full run: navigate → select tramite → Cl@ve auth → detect slots → notify. Always closes the browser via `finally`, even on error.
 - `explore.py` — same browser setup as checker.py, but opens headed and stays open for manual navigation/debugging.
-- `scheduler.py` — long-running loop: runs `checker.py --headless` as a subprocess, then sleeps a random interval before the next run (with a 300s subprocess timeout so a stuck run can't block the loop forever). On a run failure (site unavailable), retries every 5 minutes instead of the normal interval if it's a Thursday or Friday (new slots tend to drop those days) — see `FAST_RETRY_WEEKDAYS`.
+- `scheduler.py` — long-running loop: runs `checker.py --headless` as a subprocess, then sleeps before the next run (with a 300s subprocess timeout so a stuck run can't block the loop forever). Default interval is 30 minutes (±10% jitter); drops to 15 minutes on Thursday/Friday mornings (06:00–15:00, new slots tend to drop those days) — see `MORNING_START`/`MORNING_END`/`FAST_WEEKDAYS`. On a run failure (site unavailable), retries every 5 minutes instead of the normal interval on those same fast days — see `FAST_RETRY_SECONDS`.
 - `bot.py` — one-off helper to discover a Telegram user/chat ID: run it, have each recipient DM the bot `/start`, it replies with their ID to put in `TELEGRAM_CHAT_IDS`.
 
 ## Configuration
