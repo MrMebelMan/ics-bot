@@ -5,6 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+Environment=PYTHONUNBUFFERED=1
 WorkingDirectory=%h/icp_bot
 ExecStart=%h/icp_bot/.venv/bin/python3 scheduler.py
 Restart=on-failure
