@@ -78,15 +78,17 @@ async def check_slots() -> tuple[bool, str | None]:
             # The no-slots text on this page isn't a reliable signal on its own —
             # continue through the booking wizard to a page where it is.
             print("No-slots text found here, but it's not conclusive — continuing to verify...")
-            await asyncio.sleep(random.uniform(1.0, 3.0))
+            # This deeper booking-request flow hits more sensitive/rate-limited
+            # endpoints than plain browsing, so use longer delays here.
+            await asyncio.sleep(random.uniform(3.0, 6.0))
             await page.click("#btnCopiar")
             await page.wait_for_load_state("networkidle", timeout=TIMEOUT)
-            await asyncio.sleep(random.uniform(1.0, 3.0))
+            await asyncio.sleep(random.uniform(3.0, 6.0))
 
             print("Clicking Aceptar (step 2)...")
             await page.click("#btnEnviar")
             await page.wait_for_load_state("networkidle", timeout=TIMEOUT)
-            await asyncio.sleep(random.uniform(1.0, 3.0))
+            await asyncio.sleep(random.uniform(3.0, 6.0))
 
             print("Clicking Solicitar Cita...")
             await page.click("#btnEnviar")
