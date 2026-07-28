@@ -56,19 +56,12 @@ async def launch_browser(playwright, headless: bool = True) -> tuple[Browser, Br
     if proxy_pass and "_session-" not in proxy_pass:
         proxy_pass = f"{proxy_pass}_session-{secrets.token_hex(4)}"
     proxy = {"server": PROXY_SERVER, "username": PROXY_USER, "password": proxy_pass} if PROXY_SERVER else None
-    launch_kwargs = dict(
+    browser = await playwright.chromium.launch(
         headless=headless,
+        executable_path=CHROMIUM_PATH,
         args=["--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage", "--disable-gpu"],
         proxy=proxy,
     )
-    if CHROMIUM_PATH:
-        launch_kwargs["executable_path"] = CHROMIUM_PATH
-    else:
-        # Force full Chromium — Playwright otherwise silently substitutes the
-        # lightweight "headless shell" build for headless launches, which may
-        # not be installed/extracted correctly.
-        launch_kwargs["channel"] = "chromium"
-    browser = await playwright.chromium.launch(**launch_kwargs)
     context = await browser.new_context(
         user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
         extra_http_headers={

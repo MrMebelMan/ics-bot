@@ -47,7 +47,12 @@ async def check_slots() -> bool:
             print("Clicking DNIe / Certificado electrónico...")
             await page.click("button.idp-button[onclick*='AFIRMA']")
             print("Waiting for post-auth redirect...")
-            await page.wait_for_url("**/acEntrada**", timeout=TIMEOUT)
+            try:
+                await page.wait_for_url("**/acEntrada**", timeout=TIMEOUT)
+            except Exception:
+                await page.screenshot(path="timeout_debug.png")
+                print(f"Timed out waiting for redirect — screenshot saved to timeout_debug.png, current URL: {page.url}")
+                raise
             await page.wait_for_load_state("networkidle", timeout=TIMEOUT)
             print(f"Final page: {page.url}")
 
