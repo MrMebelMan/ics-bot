@@ -113,7 +113,10 @@ async def check_slots() -> tuple[bool, str | None]:
             if page is not None:
                 try:
                     await page.screenshot(path="error_debug.png")
-                    print(f"Error occurred — screenshot saved to error_debug.png, current URL: {page.url}")
+                    html = await page.content()
+                    with open("error_debug.html", "w") as f:
+                        f.write(html)
+                    print(f"Error occurred — screenshot/HTML saved to error_debug.png/.html, current URL: {page.url}")
                 except Exception:
                     pass
             raise
