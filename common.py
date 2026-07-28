@@ -22,8 +22,6 @@ CHROMIUM_PATH = os.getenv("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH") or None
 PROXY_SERVER = os.getenv("PROXY_SERVER", "")
 PROXY_USER = os.getenv("PROXY_USER", "")
 PROXY_PASS = os.getenv("PROXY_PASS", "")
-P12_PATH = os.getenv("P12_PATH", "./cert.p12")
-P12_PASSPHRASE = os.getenv("P12_PASSPHRASE", "")
 NOTIFY_ON_ERROR = os.getenv("NOTIFY_ON_ERROR", "").lower() in ("1", "true", "yes")
 TIMEOUT = int(os.getenv("TIMEOUT", "15000"))
 

@@ -41,7 +41,6 @@ python3 scheduler.py
 ## Configuration
 
 Copy `.env.example` to `.env` and fill in:
-- `P12_PATH` / `P12_PASSPHRASE` — FNMT digital certificate for Cl@ve auth
 - `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_IDS` — comma-separated chat IDs; the first one also receives error notifications (see `NOTIFY_ON_ERROR`), all of them receive slot-available alerts
 - `NO_SLOTS_TEXT` — exact Spanish text shown when no slots exist (`En este momento no hay citas disponibles.`)
 - `TARGET_URL` — defaults to Barcelona (p=8)
