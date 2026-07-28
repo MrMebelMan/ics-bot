@@ -1,0 +1,72 @@
+So, currently, the last page where we detect no slots text is not a reliable indicator that there are no slots.
+If no slots text is present, we can continue to verify further.
+If no slots text is not present though, we know immediately that there is a slot!
+
+Anyway, if we see no slots, we continue as follows:
+
+Click this button
+<input id="btnCopiar" type="button" class="mf-button primary" value="Copiar a datos solicitante" onclick="copiarPresentador()">
+
+then click
+<input id="btnEnviar" type="button" class="mf-button primary" value="Aceptar" onclick="envia()">
+
+you'll end up in
+CITA PREVIA EXTRANJERÍA
+POLICÍA-TOMA DE HUELLAS (EXPEDICIÓN DE TARJETA) INICIAL, RENOVACIÓN, DUPLICADO Y LEY 14/2013
+
+Identidad del usuario de cita
+NAME SURNAME - CODE
+A continuación puedes seleccionar cualquiera de las siguientes opciones
+
+
+then click
+<input id="btnEnviar" type="button" class="mf-button primary" value="Solicitar Cita" onclick="enviar('solicitud')">
+
+you will end up on page that contains
+
+<section class="mf-layout--main-content">
+				<ul class="mf-window-toolbar">
+					<li class="mf-window-toolbar--tool">Paso 1 de 5</li>
+				</ul>
+				<div class="mf-window-header">
+				    
+                    <div>
+                        <h2 class="mf-window-header--title">CITA PREVIA EXTRANJERÍA</h2>
+                    </div> 
+					<p class="mf-app-subtitle">POLICÍA-TOMA DE HUELLAS (EXPEDICIÓN DE TARJETA) INICIAL, RENOVACIÓN, DUPLICADO Y LEY 14/2013</p>
+				</div>
+				<div class="mf-main--content ac-custom-content">
+					<form name="procedimientos" action="salirInicio" method="post"><input type="hidden" name="c93c21d5-8022-4fd1-831e-c6e6654f65b0" value="7ca251f7-2587-4430-8f31-8b38c15c9cd3"><input type="hidden" name="ef7e3c86-0566-454e-a05f-8fccf379448b" value="">
+
+						<fieldset>
+							<legend class="mf-paragraph-header">Identidad del usuario de cita</legend>
+							<span>NAME SURNAME -  CODE</span>
+							
+						</fieldset>
+						
+											
+						<div class="mf-main--content ac-custom-content">
+							<h3 class="mf-paragraph-header">Información</h3>
+<!-- 							<p th:utext="#{lit_nohaycitas_sede}" th:classappend="${ico=='ok'} ? 'mf-msg_'+'_success' : (${ico=='error'} ? 'mf-msg_'+'_error' : 'mf-msg_'+'_info')"> -->
+<!-- 							</p> -->
+							<!-- Se muestra si existe el modelo "lit_nohaycitas_sin_clave_sede" -->
+							
+							 
+							<!-- Se muestra si NO existe el modelo "lit_nohaycitas_sin_clave_sede" -->
+							<p class="mf-msg__info">En este momento no hay citas disponibles.<br><br>En breve, la Oficina pondrá a su disposición nuevas citas.</p>				
+							
+							<br>
+						</div>
+						
+						<div class="mf-layout--row layout--abajo">
+							
+							<input id="btnSalir" type="button" class="mf-button secondary" value="Salir" onclick="goAc_opc_direct()">
+						</div>
+					</form>
+				</div>
+			</section>
+
+
+so this is the last page where we know for sure that there are no slots (En este momento no hay citas disponibles)
+
+when you see no slots here too, then the check is done

@@ -1,0 +1,54 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "deploy/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Load deploy SSH key
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Trust VPS host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.VPS_PORT || 22 }}" -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync code to VPS
+        run: |
+          rsync -az --delete \
+            -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+            --exclude ".git/" \
+            --exclude ".github/" \
+            --exclude "deploy/" \
+            --exclude ".env" \
+            --exclude "*.p12" \
+            --exclude ".venv/" \
+            --exclude "__pycache__/" \
+            --exclude "*.pyc" \
+            --exclude "screenshot.png" \
+            ./ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/icp_bot/"
+
+      - name: Install dependencies and restart service
+        run: |
+          ssh -p "${{ secrets.VPS_PORT || 22 }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" '
+            set -e
+            cd ~/icp_bot
+            if [ ! -d .venv ]; then python3 -m venv .venv; fi
+            .venv/bin/pip install --quiet --upgrade pip
+            .venv/bin/pip install --quiet -r requirements.txt
+            export XDG_RUNTIME_DIR=/run/user/$(id -u)
+            systemctl --user restart icp-bot.service
+            systemctl --user status icp-bot.service --no-pager
+          '

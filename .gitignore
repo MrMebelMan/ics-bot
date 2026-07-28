@@ -1,0 +1,7 @@
+.env
+*.p12
+wg-ES-*.conf
+screenshot.png
+__pycache__/
+*.pyc
+.venv/
