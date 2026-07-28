@@ -10,6 +10,7 @@ FAST_WEEKDAYS = (3, 4)  # Thursday, Friday (Monday=0) — new slots tend to drop
 DEFAULT_INTERVAL_MIN = 30
 FAST_MORNING_INTERVAL_MIN = 15
 FAST_RETRY_MIN_MINUTES, FAST_RETRY_MAX_MINUTES = 4, 7
+MAX_CONSECUTIVE_FAST_RETRIES = 6
 
 
 def next_delay_seconds(now: datetime) -> float:
@@ -20,6 +21,7 @@ def next_delay_seconds(now: datetime) -> float:
 
 
 def main() -> None:
+    consecutive_failures = 0
     while True:
         now = datetime.now()
         print(f"[{now.isoformat(timespec='seconds')}] Running checker.py --headless")
@@ -31,9 +33,16 @@ def main() -> None:
             site_unavailable = True
 
         if site_unavailable:
-            delay = random.uniform(FAST_RETRY_MIN_MINUTES, FAST_RETRY_MAX_MINUTES) * 60
-            print(f"Site unavailable — retrying in {delay / 60:.1f}m instead of the normal schedule.")
+            consecutive_failures += 1
         else:
+            consecutive_failures = 0
+
+        if site_unavailable and consecutive_failures <= MAX_CONSECUTIVE_FAST_RETRIES:
+            delay = random.uniform(FAST_RETRY_MIN_MINUTES, FAST_RETRY_MAX_MINUTES) * 60
+            print(f"Site unavailable ({consecutive_failures}/{MAX_CONSECUTIVE_FAST_RETRIES}) — retrying in {delay / 60:.1f}m instead of the normal schedule.")
+        else:
+            if site_unavailable:
+                print(f"Site still unavailable after {MAX_CONSECUTIVE_FAST_RETRIES} fast retries — falling back to the normal schedule.")
             delay = next_delay_seconds(datetime.now())
 
         next_run = datetime.now() + timedelta(seconds=delay)
