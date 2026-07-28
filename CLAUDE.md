@@ -96,9 +96,9 @@ The site rejects non-Spanish IPs at the WAF level. A residential proxy (e.g. IPR
 2. Wait for `#tramiteGrupo[0]` select → select value `4010` (TOMA DE HUELLAS / TIE)
 3. Random 1–3s delay → click `#btnAceptar`
 4. Wait for info page → click `#btnAccesoClave` (Cl@ve auth path)
-5. Wait → click `button.idp-button[onclick*='AFIRMA']` (DNIe / Certificado electrónico — there are multiple `.idp-button` elements on this page, so it must be targeted by its `onclick` attribute, not the class alone)
+5. Wait → click `button.idp-button[onclick*='AFIRMA']` (DNIe / Certificado electrónico — there are multiple `.idp-button` elements on this page, so it must be targeted by its `onclick` attribute, not the class alone). On timeout here, a screenshot is saved to `timeout_debug.png` before re-raising, to help diagnose stuck cert/auth flows.
 6. Wait for redirect to `/acEntrada`
-7. Check page text for `NO_SLOTS_TEXT` → notify via Telegram if absent
+7. Check page text for `NO_SLOTS_TEXT`. If absent, slots are available — notify immediately. If present, this page's text is **not conclusive on its own** — continue: click `#btnCopiar` → `#btnEnviar` ("Aceptar") → `#btnEnviar` ("Solicitar Cita") to reach the 5-step booking wizard, then check `NO_SLOTS_TEXT` again on that page, which is the reliable signal.
 
 ## Notifications
 
@@ -116,8 +116,4 @@ After provisioning, `.env` and the `.p12` cert are placed on the server by hand 
 
 ### CI/CD
 
-`.github/workflows/deploy.yml` runs on push to `main` (or manually via `workflow_dispatch`): rsyncs the repo to `~/icp_bot` on the VPS (excluding `.env`, `*.p12`, `.venv`, `deploy/`), reinstalls Python deps, and restarts the `icp-bot` user service over SSH. Required repo secrets: `VPS_HOST`, `VPS_USER` (the `icpbot` service user), `VPS_SSH_KEY` (private key matching an `authorized_keys` entry on the server), `VPS_PORT` (optional, defaults to 22).
-
-## Known issues
-
-`slots.txt` documents that the current no-slots check (reading `NO_SLOTS_TEXT` right after landing on `/acEntrada`) is not fully reliable — reaching a page where the text is trustworthy requires three more clicks (`#btnCopiar` → `#btnEnviar` "Aceptar" → `#btnEnviar` "Solicitar Cita"). This flow is not yet implemented in `checker.py`.
+`.github/workflows/deploy.yml` runs on push to `main` (or manually via `workflow_dispatch`): rsyncs the repo to `~/icp_bot` on the VPS (excluding `.env`, `*.p12`, `.venv`, `deploy/`), reinstalls Python deps, and restarts the `icp-bot` user service over SSH. `deploy/` is deliberately excluded from both the trigger and the sync — provisioning changes (packages, systemd unit, browser policy) must be applied manually. Required repo secrets: `VPS_HOST`, `VPS_USER` (the sudoer account the bot runs as), `VPS_SSH_KEY` (private key matching an `authorized_keys` entry on the server), `VPS_PORT` (optional, defaults to 22).

@@ -70,8 +70,31 @@ async def check_slots() -> bool:
                 print("\033[33mWARN: NO_SLOTS_TEXT not set — cannot detect slots.\033[0m")
                 return True
 
-            if NO_SLOTS_TEXT.lower() in page_text.lower():
-                print("\033[31mNo slots available.\033[0m")
+            if NO_SLOTS_TEXT.lower() not in page_text.lower():
+                print("\033[32mSLOTS AVAILABLE — sending notification!\033[0m")
+                send_telegram(f"ICP appointment slots may be available!\n{TARGET_URL}")
+                return True
+
+            # The no-slots text on this page isn't a reliable signal on its own —
+            # continue through the booking wizard to a page where it is.
+            print("No-slots text found here, but it's not conclusive — continuing to verify...")
+            await asyncio.sleep(random.uniform(1.0, 3.0))
+            await page.click("#btnCopiar")
+            await page.wait_for_load_state("networkidle", timeout=TIMEOUT)
+            await asyncio.sleep(random.uniform(1.0, 3.0))
+
+            print("Clicking Aceptar (step 2)...")
+            await page.click("#btnEnviar")
+            await page.wait_for_load_state("networkidle", timeout=TIMEOUT)
+            await asyncio.sleep(random.uniform(1.0, 3.0))
+
+            print("Clicking Solicitar Cita...")
+            await page.click("#btnEnviar")
+            await page.wait_for_load_state("networkidle", timeout=TIMEOUT)
+
+            final_text = await page.inner_text("body")
+            if NO_SLOTS_TEXT.lower() in final_text.lower():
+                print("\033[31mNo slots available (confirmed).\033[0m")
             else:
                 print("\033[32mSLOTS AVAILABLE — sending notification!\033[0m")
                 send_telegram(f"ICP appointment slots may be available!\n{TARGET_URL}")
