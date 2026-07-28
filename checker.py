@@ -7,7 +7,7 @@ import sys
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 
-from common import launch_browser, send_telegram, send_telegram_error, TARGET_URL, NOTIFY_ON_ERROR, TIMEOUT
+from common import launch_browser, send_telegram, send_telegram_error, send_telegram_photo, TARGET_URL, NOTIFY_ON_ERROR, TIMEOUT
 
 load_dotenv()
 
@@ -72,7 +72,9 @@ async def check_slots() -> bool:
 
             if NO_SLOTS_TEXT.lower() not in page_text.lower():
                 print("\033[32mSLOTS AVAILABLE — sending notification!\033[0m")
+                await page.screenshot(path="slots_found.png")
                 send_telegram(f"ICP appointment slots may be available!\n{TARGET_URL}")
+                # send_telegram_photo("slots_found.png", caption="Slots may be available!")
                 return True
 
             # The no-slots text on this page isn't a reliable signal on its own —
@@ -97,7 +99,9 @@ async def check_slots() -> bool:
                 print("\033[31mNo slots available (confirmed).\033[0m")
             else:
                 print("\033[32mSLOTS AVAILABLE — sending notification!\033[0m")
+                await page.screenshot(path="slots_found.png")
                 send_telegram(f"ICP appointment slots may be available!\n{TARGET_URL}")
+                # send_telegram_photo("slots_found.png", caption="Slots may be available!")
 
             return True
         finally:

@@ -51,6 +51,22 @@ def send_telegram_error(message: str) -> None:
     _send_to(primary, message)
 
 
+def send_telegram_photo(photo_path: str, caption: str = "") -> None:
+    """Not currently called anywhere — wired up for later use, see checker.py."""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_IDS:
+        print(f"[NOTIFY] (photo) {photo_path}: {caption}")
+        return
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
+    for chat_id in TELEGRAM_CHAT_IDS:
+        try:
+            with open(photo_path, "rb") as f:
+                response = _requests.post(url, data={"chat_id": chat_id, "caption": caption}, files={"photo": f}, timeout=30)
+            response.raise_for_status()
+        except _requests.RequestException as error:
+            print(f"[NOTIFY ERROR] Could not send Telegram photo to chat {chat_id}: {type(error).__name__}")
+
+
 async def launch_browser(playwright, headless: bool = True) -> tuple[Browser, BrowserContext]:
     proxy_pass = PROXY_PASS
     if proxy_pass and "_session-" not in proxy_pass:
