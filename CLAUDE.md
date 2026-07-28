@@ -100,7 +100,7 @@ A small VPS (1 vCPU / 2GB RAM) is sufficient — one headless Chromium instance 
 
 ### One-time provisioning
 
-`deploy/provision-vps.sh` (run once, as root, on a fresh Ubuntu box) creates a dedicated `icpbot` service user, installs system deps, sets up the NSS cert database, installs the `AutoSelectCertificateForUrls` Chromium policy, and installs `deploy/icp-bot.service` as a **user-level** systemd unit (`systemctl --user`, with `loginctl enable-linger` so it survives SSH disconnects) — deliberately not a system-level unit, so the deploy SSH account never needs sudo/root to restart it.
+`deploy/provision-vps.sh` (run once via `sudo`, as the existing sudoer account that will own the bot — no separate service user) installs system deps, sets up that user's NSS cert database, installs the `AutoSelectCertificateForUrls` Chromium policy, and installs `deploy/icp-bot.service` as a **user-level** systemd unit (`systemctl --user`, with `loginctl enable-linger` so it survives SSH disconnects) — deliberately not a system-level unit, so restarting it never needs sudo/root once set up.
 
 After provisioning, `.env` and the `.p12` cert are placed on the server by hand — never via git/CI, since they're secrets.
 
