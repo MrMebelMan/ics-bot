@@ -22,7 +22,6 @@ CHROMIUM_PATH = os.getenv("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH") or None
 PROXY_SERVER = os.getenv("PROXY_SERVER", "")
 PROXY_USER = os.getenv("PROXY_USER", "")
 PROXY_PASS = os.getenv("PROXY_PASS", "")
-TIMEOUT = int(os.getenv("TIMEOUT", "15000"))
 
 
 def _send_to(chat_ids: tuple, message: str) -> None:

@@ -37,7 +37,7 @@ python3 scheduler.py
 ## Architecture
 
 - `common.py` — shared config (env vars), Telegram senders, and `launch_browser()` (proxy + stealth fingerprint setup used by both `checker.py` and `explore.py`). Any change to browser launch args, headers, or fingerprint spoofing goes here so both scripts stay in sync.
-- `checker.py` — one full run: navigate → select tramite → Cl@ve auth → detect slots → notify. Always closes the browser via `finally`, even on error.
+- `checker.py` — one full run: navigate → select tramite → Cl@ve auth → detect slots → notify. Always closes the browser via `finally`, even on error. Playwright's per-step timeout is randomized 25–35s per run (not fixed), picked once at the top of `check_slots()`.
 - `explore.py` — same browser setup as checker.py, but opens headed and stays open for manual navigation/debugging.
 - `scheduler.py` — long-running loop: runs `checker.py --headless` as a subprocess, then sleeps before the next run (with a 300s subprocess timeout so a stuck run can't block the loop forever). Default interval is 30 minutes (±10% jitter); drops to 15 minutes on Thursday/Friday mornings (06:00–15:00, new slots tend to drop those days) — see `MORNING_START`/`MORNING_END`/`FAST_WEEKDAYS`. On any run failure (site unavailable), retries in a randomized 4–7 minutes instead of waiting out the normal interval, regardless of day — see `FAST_RETRY_MIN_MINUTES`/`FAST_RETRY_MAX_MINUTES`. Caps at 6 consecutive fast retries (`MAX_CONSECUTIVE_FAST_RETRIES`) before falling back to the normal schedule, so a persistently broken site/proxy/cert doesn't get hammered indefinitely; the counter resets on the next success.
 - `bot.py` — one-off helper to discover a Telegram user/chat ID: run it, have each recipient DM the bot `/start`, it replies with their ID to put in `TELEGRAM_CHAT_IDS`.
@@ -49,7 +49,6 @@ Copy `.env.example` to `.env` and fill in:
 - `NO_SLOTS_TEXT` — exact Spanish text shown when no slots exist (`En este momento no hay citas disponibles.`)
 - `TARGET_URL` — defaults to Barcelona (p=8)
 - `PROXY_SERVER` / `PROXY_USER` / `PROXY_PASS` — residential proxy (see Geoblocking below); a session id is auto-appended to `PROXY_PASS` per run if not already present, so one run keeps one IP but each new run gets a fresh one
-- `TIMEOUT` — per-step Playwright timeout in ms (default 15000)
 
 **Never read `.env` — it contains secrets. Use `.env.example` instead.**
 
@@ -98,7 +97,9 @@ The site rejects non-Spanish IPs at the WAF level. A residential proxy (e.g. IPR
 4. Wait for info page → click `#btnAccesoClave` (Cl@ve auth path)
 5. Wait → click `button.idp-button[onclick*='AFIRMA']` (DNIe / Certificado electrónico — there are multiple `.idp-button` elements on this page, so it must be targeted by its `onclick` attribute, not the class alone).
 6. Wait for redirect to `/acEntrada`
-7. Check page text for `NO_SLOTS_TEXT`. If absent, slots are available — notify immediately. If present, this page's text is **not conclusive on its own** — continue: click `#btnCopiar` → `#btnEnviar` ("Aceptar") → `#btnEnviar` ("Solicitar Cita") to reach the 5-step booking wizard, then check `NO_SLOTS_TEXT` again on that page, which is the reliable signal.
+7. Check page text for `NO_SLOTS_TEXT`. If absent, slots are available — notify immediately. If present, treated as no slots.
+
+The deeper verification (continuing through `#btnCopiar` → `#btnEnviar` "Aceptar" → `#btnEnviar` "Solicitar Cita" to the 5-step booking wizard, per `slots.txt`, since the first page's text technically isn't fully conclusive on its own) is currently **commented out** in `checker.py` — it was triggering WAF blocks on the live site. Relying on just the first-page check for now.
 
 Any unhandled exception anywhere in this flow triggers a screenshot to `error_debug.png` before re-raising, to help diagnose stuck/blocked steps (e.g. an unexpected native browser dialog).
 
