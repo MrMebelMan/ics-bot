@@ -1,11 +1,8 @@
 .env
 *.p12
 wg-ES-*.conf
-screenshot.png
-slots_found.png
-error_debug.png
-error_debug.html
-timeout_debug.png
+*.png
+*.html
 __pycache__/
 *.pyc
 .venv/
