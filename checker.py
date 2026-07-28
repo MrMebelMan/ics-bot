@@ -7,7 +7,7 @@ import sys
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 
-from common import launch_browser, send_telegram, send_telegram_error, send_telegram_photo, TARGET_URL, NOTIFY_ON_ERROR, TIMEOUT
+from common import launch_browser, send_telegram, send_telegram_error, send_telegram_photo, TARGET_URL, TIMEOUT
 
 load_dotenv()
 
@@ -16,9 +16,9 @@ NO_SLOTS_TEXT = os.getenv("NO_SLOTS_TEXT", "")
 HEADLESS = "--headless" in sys.argv
 
 
-async def check_slots() -> bool:
-    """Returns True if the site was reachable and evaluated (slots or no slots),
-    False if the site/auth was unavailable (empty page, cert error)."""
+async def check_slots() -> tuple[bool, str | None]:
+    """Returns (True, None) if the site was reachable and evaluated (slots or no
+    slots), or (False, reason) if the site/auth was unavailable."""
     async with async_playwright() as p:
         browser, context = await launch_browser(p, headless=HEADLESS)
         try:
@@ -59,23 +59,25 @@ async def check_slots() -> bool:
             page_text = await page.inner_text("body")
 
             if not page_text.strip():
-                print("\033[31mERROR: Page body is empty — cert auth may have failed.\033[0m")
-                return False
+                reason = "Page body is empty — cert auth may have failed."
+                print(f"\033[31mERROR: {reason}\033[0m")
+                return False, reason
 
             if "playwright client-certificate error" in page_text.lower() or "unable to verify" in page_text.lower():
-                print("\033[31mERROR: Certificate/TLS error.\033[0m")
-                return False
+                reason = "Certificate/TLS error."
+                print(f"\033[31mERROR: {reason}\033[0m")
+                return False, reason
 
             if not NO_SLOTS_TEXT:
                 print("\033[33mWARN: NO_SLOTS_TEXT not set — cannot detect slots.\033[0m")
-                return True
+                return True, None
 
             if NO_SLOTS_TEXT.lower() not in page_text.lower():
                 print("\033[32mSLOTS AVAILABLE — sending notification!\033[0m")
                 await page.screenshot(path="slots_found.png")
                 send_telegram(f"ICP appointment slots may be available!\n{TARGET_URL}")
                 # send_telegram_photo("slots_found.png", caption="Slots may be available!")
-                return True
+                return True, None
 
             # The no-slots text on this page isn't a reliable signal on its own —
             # continue through the booking wizard to a page where it is.
@@ -103,19 +105,19 @@ async def check_slots() -> bool:
                 send_telegram(f"ICP appointment slots may be available!\n{TARGET_URL}")
                 # send_telegram_photo("slots_found.png", caption="Slots may be available!")
 
-            return True
+            return True, None
         finally:
             await browser.close()
 
 
 if __name__ == "__main__":
     try:
-        ok = asyncio.run(check_slots())
+        ok, error_reason = asyncio.run(check_slots())
     except Exception as e:
-        msg = str(e)
-        print(f"ERROR: {msg}")
-        if NOTIFY_ON_ERROR:
-            send_telegram_error(f"ICP checker failed: {msg[:300]}")
-        ok = False
+        ok, error_reason = False, str(e)
+        print(f"ERROR: {error_reason}")
+
+    if not ok:
+        send_telegram_error(f"ICP checker failed: {(error_reason or 'unknown error')[:300]}")
 
     sys.exit(0 if ok else 1)

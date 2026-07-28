@@ -45,7 +45,7 @@ python3 scheduler.py
 ## Configuration
 
 Copy `.env.example` to `.env` and fill in:
-- `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_IDS` — comma-separated chat IDs; the first one also receives error notifications (see `NOTIFY_ON_ERROR`), all of them receive slot-available alerts
+- `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_IDS` — comma-separated chat IDs; the first one is the admin account and always receives error notifications on every failure, all of them receive slot-available alerts
 - `NO_SLOTS_TEXT` — exact Spanish text shown when no slots exist (`En este momento no hay citas disponibles.`)
 - `TARGET_URL` — defaults to Barcelona (p=8)
 - `PROXY_SERVER` / `PROXY_USER` / `PROXY_PASS` — residential proxy (see Geoblocking below); a session id is auto-appended to `PROXY_PASS` per run if not already present, so one run keeps one IP but each new run gets a fresh one
@@ -102,7 +102,7 @@ The site rejects non-Spanish IPs at the WAF level. A residential proxy (e.g. IPR
 
 ## Notifications
 
-Telegram bot. Get token from `@BotFather`, chat ID from `@userinfobot`. Slot-available alerts go to every ID in `TELEGRAM_CHAT_IDS`; error alerts (when `NOTIFY_ON_ERROR=1`) go only to the first ID.
+Telegram bot. Get token from `@BotFather`, chat ID from `@userinfobot`. Slot-available alerts go to every ID in `TELEGRAM_CHAT_IDS`; error alerts fire unconditionally on every failed run and go only to the first (admin) ID.
 
 ## Production deployment (VPS)
 

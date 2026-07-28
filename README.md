@@ -83,9 +83,9 @@ You'll get a Telegram message like:
 > https://icp.administracionelectronica.gob.es/icpplustieb/citar?p=8&locale=es
 
 If you listed more than one Telegram chat ID, everyone on the list gets the
-"slots available" message. Only the first person on the list also gets pinged
-if the bot itself breaks (expired certificate, proxy down, government changed
-the page layout, etc.) — set `NOTIFY_ON_ERROR=1` in `.env` to enable that.
+"slots available" message. Only the first person on the list (the admin
+account) also gets pinged automatically whenever the bot itself breaks
+(expired certificate, proxy down, government changed the page layout, etc.).
 
 ## Troubleshooting
 
