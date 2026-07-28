@@ -50,6 +50,12 @@ def send_telegram_error(message: str) -> None:
     _send_to(primary, message)
 
 
+def send_telegram_success(message: str) -> None:
+    """Success heartbeats go only to the primary (first, admin) chat id."""
+    primary = TELEGRAM_CHAT_IDS[:1]
+    _send_to(primary, message)
+
+
 def send_telegram_photo(photo_path: str, caption: str = "") -> None:
     """Not currently called anywhere — wired up for later use, see checker.py."""
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_IDS:

@@ -9,7 +9,7 @@ MORNING_START, MORNING_END = 6, 15
 FAST_WEEKDAYS = (3, 4)  # Thursday, Friday (Monday=0) — new slots tend to drop these days
 DEFAULT_INTERVAL_MIN = 30
 FAST_MORNING_INTERVAL_MIN = 15
-FAST_RETRY_SECONDS = 5 * 60
+FAST_RETRY_MIN_MINUTES, FAST_RETRY_MAX_MINUTES = 4, 7
 
 
 def next_delay_seconds(now: datetime) -> float:
@@ -31,8 +31,8 @@ def main() -> None:
             site_unavailable = True
 
         if site_unavailable:
-            delay = FAST_RETRY_SECONDS
-            print(f"Site unavailable — retrying in {delay // 60:.0f}m instead of the normal schedule.")
+            delay = random.uniform(FAST_RETRY_MIN_MINUTES, FAST_RETRY_MAX_MINUTES) * 60
+            print(f"Site unavailable — retrying in {delay / 60:.1f}m instead of the normal schedule.")
         else:
             delay = next_delay_seconds(datetime.now())
 

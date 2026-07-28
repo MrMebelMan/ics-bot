@@ -7,7 +7,7 @@ import sys
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 
-from common import launch_browser, send_telegram, send_telegram_error, send_telegram_photo, TARGET_URL, TIMEOUT
+from common import launch_browser, send_telegram, send_telegram_error, send_telegram_success, send_telegram_photo, TARGET_URL, TIMEOUT
 
 load_dotenv()
 
@@ -21,6 +21,7 @@ async def check_slots() -> tuple[bool, str | None]:
     slots), or (False, reason) if the site/auth was unavailable."""
     async with async_playwright() as p:
         browser, context = await launch_browser(p, headless=HEADLESS)
+        page = None
         try:
             page = await context.new_page()
 
@@ -47,12 +48,7 @@ async def check_slots() -> tuple[bool, str | None]:
             print("Clicking DNIe / Certificado electrónico...")
             await page.click("button.idp-button[onclick*='AFIRMA']")
             print("Waiting for post-auth redirect...")
-            try:
-                await page.wait_for_url("**/acEntrada**", timeout=TIMEOUT)
-            except Exception:
-                await page.screenshot(path="timeout_debug.png")
-                print(f"Timed out waiting for redirect — screenshot saved to timeout_debug.png, current URL: {page.url}")
-                raise
+            await page.wait_for_url("**/acEntrada**", timeout=TIMEOUT)
             await page.wait_for_load_state("networkidle", timeout=TIMEOUT)
             print(f"Final page: {page.url}")
 
@@ -106,6 +102,14 @@ async def check_slots() -> tuple[bool, str | None]:
                 # send_telegram_photo("slots_found.png", caption="Slots may be available!")
 
             return True, None
+        except Exception:
+            if page is not None:
+                try:
+                    await page.screenshot(path="error_debug.png")
+                    print(f"Error occurred — screenshot saved to error_debug.png, current URL: {page.url}")
+                except Exception:
+                    pass
+            raise
         finally:
             await browser.close()
 
@@ -119,5 +123,7 @@ if __name__ == "__main__":
 
     if not ok:
         send_telegram_error(f"ICP checker failed: {(error_reason or 'unknown error')[:300]}")
+    else:
+        send_telegram_success("🟢 ICP checker: run completed successfully.")
 
     sys.exit(0 if ok else 1)
