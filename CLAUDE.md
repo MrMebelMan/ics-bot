@@ -63,11 +63,16 @@ certutil -d sql:$HOME/.pki/nssdb -N --empty-password
 pk12util -d sql:$HOME/.pki/nssdb -i /path/to/cert.p12 -W YOUR_PASSPHRASE
 ```
 
-Headless Chromium cannot show the "select a certificate" picker dialog, so it needs the `AutoSelectCertificateForUrls` enterprise policy to auto-select the imported cert for the Cl@ve identity domain:
+Headless Chromium cannot show the "select a certificate" picker dialog, so it needs the `AutoSelectCertificateForUrls` enterprise policy to auto-select the imported cert for the Cl@ve identity domain. This policy is only honored by a real system browser binary launched via `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` (`executable_path=`) — **not** Playwright's own bundled Chromium (`playwright install chromium`), which doesn't read OS enterprise policy paths at all.
+
+On Ubuntu, `apt install chromium-browser` is a transitional package that installs the **snap** build (default since 19.10) — snap confinement can't see `/etc/*/policies/managed/`, so the policy silently never applies. Use real Google Chrome instead (a genuine `.deb`, not a snap):
 
 ```bash
-sudo mkdir -p /etc/chromium/policies/managed   # Ubuntu/Debian; use /etc/opt/chrome/policies/managed for Chrome
-sudo tee /etc/chromium/policies/managed/icp.json << 'EOF'
+wget -qO /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install -y /tmp/chrome.deb
+
+sudo mkdir -p /etc/opt/chrome/policies/managed
+sudo tee /etc/opt/chrome/policies/managed/icp.json << 'EOF'
 {
   "AutoSelectCertificateForUrls": [
     "{\"pattern\":\"https://pasarela-ident.clave.gob.es\",\"filter\":{}}"
@@ -76,7 +81,9 @@ sudo tee /etc/chromium/policies/managed/icp.json << 'EOF'
 EOF
 ```
 
-On NixOS this is `programs.chromium.{enable, extraOpts}` in `configuration.nix` instead (writes the same file under the hood).
+Then set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome-stable` in `.env`.
+
+On NixOS, `programs.chromium.{enable, extraOpts}` in `configuration.nix` writes the equivalent policy for the system nixpkgs Chromium (`/etc/chromium/policies/managed/extra.json`), which is what `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` should point at there instead.
 
 ## Geoblocking
 

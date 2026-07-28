@@ -21,7 +21,16 @@ APP_DIR="/home/$SERVICE_USER/icp_bot"
 
 echo "==> Installing system packages"
 apt-get update
-apt-get install -y python3 python3-venv libnss3-tools rsync
+apt-get install -y python3 python3-venv libnss3-tools rsync wget gnupg
+
+echo "==> Installing Google Chrome (real .deb, not the chromium snap —"
+echo "    snap confinement can't see /etc/*/policies/managed, so cert"
+echo "    auto-select would silently never apply)"
+if ! command -v google-chrome-stable &>/dev/null; then
+  wget -qO /tmp/google-chrome-stable.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  apt-get install -y /tmp/google-chrome-stable.deb
+  rm /tmp/google-chrome-stable.deb
+fi
 
 echo "==> Enabling lingering for $SERVICE_USER so the user service runs without an active SSH session"
 loginctl enable-linger "$SERVICE_USER"
@@ -37,9 +46,9 @@ sudo -u "$SERVICE_USER" bash -c '
 echo "    Now import the certificate as $SERVICE_USER:"
 echo "    sudo -u $SERVICE_USER pk12util -d sql:/home/$SERVICE_USER/.pki/nssdb -i /path/to/cert.p12"
 
-echo "==> Installing AutoSelectCertificateForUrls Chromium policy"
-mkdir -p /etc/chromium/policies/managed
-cat > /etc/chromium/policies/managed/icp.json << 'EOF'
+echo "==> Installing AutoSelectCertificateForUrls policy for Google Chrome"
+mkdir -p /etc/opt/chrome/policies/managed
+cat > /etc/opt/chrome/policies/managed/icp.json << 'EOF'
 {
   "AutoSelectCertificateForUrls": [
     "{\"pattern\":\"https://pasarela-ident.clave.gob.es\",\"filter\":{}}"
@@ -64,10 +73,13 @@ Remaining manual steps:
   2. Copy your .p12 certificate to the server and import it:
        sudo -u $SERVICE_USER pk12util -d sql:/home/$SERVICE_USER/.pki/nssdb -i /path/to/cert.p12
   3. Deploy the code (push to main, or trigger .github/workflows/deploy.yml manually).
-  4. Create $APP_DIR/.env from .env.example and fill in real values
+  4. Create $APP_DIR/.env from .env.example and fill in real values, plus:
+       PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
      (chown $SERVICE_USER:$SERVICE_USER $APP_DIR/.env; chmod 600 $APP_DIR/.env).
   5. Create the venv and install deps as $SERVICE_USER:
-       sudo -u $SERVICE_USER bash -c 'cd $APP_DIR && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/playwright install --with-deps chromium'
+       sudo -u $SERVICE_USER bash -c 'cd $APP_DIR && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt'
+     (no need for 'playwright install chromium' — we launch system Chrome via
+     PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, not Playwright's own bundled browser)
   6. Start the service:
        sudo -u $SERVICE_USER env XDG_RUNTIME_DIR=/run/user/\$(id -u $SERVICE_USER) systemctl --user start icp-bot.service
        sudo -u $SERVICE_USER env XDG_RUNTIME_DIR=/run/user/\$(id -u $SERVICE_USER) systemctl --user status icp-bot.service
